@@ -1,0 +1,41 @@
+name: SonarQube Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  sonarQube:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build the project
+        run: |
+          mvn clean verify
+
+      - name: SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          ./mvnw sonar:sonar \
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.host.url=$SONAR_HOST_URL
